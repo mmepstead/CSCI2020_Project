@@ -13,17 +13,35 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
+import java.io.File;
+import java.util.Scanner;
+
 public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception{
         //Load answer from file
         Pane pane = new Pane();
-        String answer = "Hello";
+        Scanner answerInput = new Scanner(new File("C:\\Users\\Matthew\\IdeaProjects\\CSCI2020_Project\\src\\Hangman\\Medium.txt"));
+        //Choose Random number between 1 and 50 and set our answer to be that word
+        double randomDouble = Math.random();
+        String string = "";
+        randomDouble = randomDouble * 49 + 1;
+        int randomInt1 = (int) randomDouble;
+        for(int i=0; i<randomInt1; i+=1)
+        {
+            string = answerInput.next();
+        }
+        String answer = string;
+        answerInput.close();
         HBox displayAnswer = new HBox();
         displayAnswer.setLayoutY(5);
         displayAnswer.setLayoutX(5);
         HBox guessBox = new HBox();
+        HBox guessedLetters = new HBox();
+        guessedLetters.setLayoutY(80);
+        guessedLetters.setLayoutX(5);
+        guessedLetters.setSpacing(8);
         guessBox.setLayoutX(5);
         guessBox.setLayoutY(40);
         guessBox.setSpacing(15);
@@ -87,7 +105,8 @@ public class Main extends Application {
 
                 if(correct == 0)
                 {
-                    //Add part to hangman and display incorrect letters in side box
+                    Text letter = new Text(Character.toString(input));
+                    guessedLetters.getChildren().add(letter);
 
                 }
             }
@@ -96,7 +115,7 @@ public class Main extends Application {
             //Autosave with server
         });
         pane.setPadding(new Insets(15,15,15,15));
-        pane.getChildren().addAll(displayAnswer,guessBox);
+        pane.getChildren().addAll(displayAnswer,guessBox,guessedLetters);
         primaryStage.setTitle("Hangman Game");
         primaryStage.setScene(new Scene(pane, 300, 275));
         primaryStage.show();
