@@ -83,7 +83,7 @@ public class Main extends Application{
                                     redPiece.column = boxColumn;
                                     //We jumped so jumped should be true
                                     jumped(jumped);
-                                    pane.getChildren().removeIf(Rectangle.class::isInstance);
+                                    //Remove move boxes from gui
 
                                 }
                                 //When clicked we move the piece to that point on the board updating all variables of its move
@@ -105,7 +105,7 @@ public class Main extends Application{
                                     //Change the player's turn
                                     changePlayer(playerTurn);
                                     //Remove our move boxes (Might be cleaner way to do this
-                                    pane.getChildren().removeIf(Rectangle.class::isInstance);
+                                   //Remove move boxes from gui
                                 }
 
                             });
@@ -156,7 +156,7 @@ public class Main extends Application{
                                     blackPiece.row = boxRow;
                                     blackPiece.column = boxColumn;
                                     jumped(jumped);
-                                    pane.getChildren().removeIf(Rectangle.class::isInstance);
+                                    //remove move boxes from gui
 
                                 }
                                 //When clicked we move the piece to that point on the board updating all variables of its move
@@ -175,7 +175,7 @@ public class Main extends Application{
                                     blackPiece.column = boxColumn;
                                     //Change the player's turn
                                     changePlayer(playerTurn);
-                                    pane.getChildren().removeIf(Rectangle.class::isInstance);
+                                    //remove move boxes from gui
                                 }
 
                             });
