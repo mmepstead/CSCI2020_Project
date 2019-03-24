@@ -194,6 +194,8 @@ public class Main extends Application {
 					if (jumped1 && boxes[0] == null) {
 						// If we ran out of jumping moves
 						jumped(false);
+						changePlayer(playerTurn);
+						return;
 					}
 					for (int j = 0; j < 4; j += 1) {
 						// For all the possible moves add a small square to show where on the board the
@@ -275,6 +277,8 @@ public class Main extends Application {
 					MoveBox[] boxes = MoveBox.generate(blackPiece, board, jumped1);
 					if (jumped1 && boxes[0] == null) {
 						jumped(false);
+						changePlayer(playerTurn);
+						return;
 					}
 					for (int j = 0; j < 4; j += 1) {
 						// For all the possible moves add a small square to show where on the board the
