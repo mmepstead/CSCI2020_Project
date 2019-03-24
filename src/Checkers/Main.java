@@ -35,7 +35,7 @@ import javafx.stage.Stage;
 
 //TODO ADD IN SECOND PLAYER TURN WITH BLACK PIECES
 public class Main extends Application {
-	boolean jumped1 = false;
+	CheckerPiece jumpingPiece = null;
 	int playerTurn = 2;
 
 	public static void main(String[] args) {
@@ -190,13 +190,11 @@ public class Main extends Application {
 			redPiece.piece.setOnMouseClicked(e -> {
 				if (playerTurn == 1) {
 					// Generate all possible moves for that piece
-					MoveBox[] boxes = MoveBox.generate(redPiece, board, jumped1);
-					if (jumped1 && boxes[0] == null) {
-						// If we ran out of jumping moves
-						jumped(false);
-						changePlayer(playerTurn);
+					if(jumpingPiece != null && redPiece != jumpingPiece)
+					{
 						return;
 					}
+					MoveBox[] boxes = MoveBox.generate(redPiece, board, jumpingPiece);
 					for (int j = 0; j < 4; j += 1) {
 						// For all the possible moves add a small square to show where on the board the
 						// are
@@ -209,10 +207,10 @@ public class Main extends Application {
 							box.setStroke(Color.TURQUOISE);
 							// For each of these create a click event
 							box.setOnMouseClicked(m -> {
-								boolean jumped = false;
+								CheckerPiece jumped = null;
 								// If we jumped have to keep repeating
 								if (jump) {
-									jumped = true;
+									jumped = redPiece;
 									// Remove the piece we jumped over
 									int r = (redPiece.row + boxRow) / 2;
 									int c = (redPiece.column + boxColumn) / 2;
@@ -220,7 +218,13 @@ public class Main extends Application {
 									if (board[r][c].kinged)
 										removeGraphic(paneG, r, c);
 									board[r][c] = null;
-
+									//Check after jump to see if any jumps left
+									MoveBox[] boxesAfterJump = MoveBox.generate(redPiece, board, jumpingPiece);
+									if (boxesAfterJump[0] == null) {
+										// If we ran out of jumping moves
+										jumped = null;
+										changePlayer(playerTurn);
+									}
 								}
 								// When clicked we move the piece to that point on the board updating all
 								// variables of its move
@@ -274,12 +278,11 @@ public class Main extends Application {
 			blackPiece.piece.setOnMouseClicked(e -> {
 				if (playerTurn == 2) {
 					// Generate all possible moves for that piece
-					MoveBox[] boxes = MoveBox.generate(blackPiece, board, jumped1);
-					if (jumped1 && boxes[0] == null) {
-						jumped(false);
-						changePlayer(playerTurn);
+					if(jumpingPiece != null && blackPiece != jumpingPiece)
+					{
 						return;
 					}
+					MoveBox[] boxes = MoveBox.generate(blackPiece, board, jumpingPiece);
 					for (int j = 0; j < 4; j += 1) {
 						// For all the possible moves add a small square to show where on the board the
 						// are
@@ -292,10 +295,10 @@ public class Main extends Application {
 							box.setStroke(Color.TURQUOISE);
 							// For each of these create a click event
 							box.setOnMouseClicked(m -> {
-								boolean jumped = false;
+								CheckerPiece jumped = null;
 								// If we jumped have to keep repeating
 								if (jump) {
-									jumped = true;
+									jumped = blackPiece;
 									// Remove the piece we jumped over
 									int r = (blackPiece.row + boxRow) / 2;
 									int c = (blackPiece.column + boxColumn) / 2;
@@ -303,7 +306,12 @@ public class Main extends Application {
 									if (board[r][c].kinged)
 										removeGraphic(paneG, r, c);
 									board[r][c] = null;
-
+									MoveBox[] boxesAfterJump = MoveBox.generate(redPiece, board, jumpingPiece);
+									if (jumpingPiece != null && boxesAfterJump[0] == null) {
+										// If we ran out of jumping moves
+										jumped = null;
+										changePlayer(playerTurn);
+									}
 								}
 								// When clicked we move the piece to that point on the board updating all
 								// variables of its move
@@ -418,8 +426,8 @@ public class Main extends Application {
 		}
 	}
 
-	public void jumped(boolean jumped) {
-		jumped1 = jumped;
+	public void jumped(CheckerPiece jumped) {
+		jumpingPiece = jumped;
 	}
 
 	public void removeBoxes(GridPane pane) {

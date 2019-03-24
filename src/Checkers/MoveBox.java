@@ -14,10 +14,8 @@ public class MoveBox {
         this.column = column;
     }
     //Generating all possible moves and storing them in an array
-    public static MoveBox[] generate(CheckerPiece piece, CheckerPiece[][] board, boolean jumped)
+    public static MoveBox[] generate(CheckerPiece piece, CheckerPiece[][] board, CheckerPiece jumpingPiece)
     {
-        //System.out.println(piece.column);
-        //System.out.println(piece.row);
         int index = 0;
         MoveBox[] boxes = new MoveBox[4];
         //Piece moving Up the board
@@ -28,7 +26,7 @@ public class MoveBox {
             {
                 if (board[piece.row - 1][piece.column + 1] == null)
                 {
-                    if(!jumped)
+                    if(jumpingPiece == null)
                     {
                         boxes[index] = new MoveBox(piece.row - 1, piece.column + 1);
                         index += 1;
@@ -50,7 +48,7 @@ public class MoveBox {
             {
                 if (board[piece.row - 1][piece.column - 1] == null)
                 {
-                    if(!jumped)
+                    if(jumpingPiece == null)
                     {
                         boxes[index] = new MoveBox(piece.row - 1, piece.column - 1);
                         index += 1;
@@ -75,7 +73,7 @@ public class MoveBox {
             {
                 if (board[piece.row + 1][piece.column + 1] == null)
                 {
-                    if(!jumped)
+                    if(jumpingPiece == null)
                     {
                         boxes[index] = new MoveBox(piece.row + 1, piece.column + 1);
                         index += 1;
@@ -96,7 +94,7 @@ public class MoveBox {
             {
                 if (board[piece.row + 1][piece.column - 1] == null)
                 {
-                    if(!jumped)
+                    if(jumpingPiece == null)
                     {
                         boxes[index] = new MoveBox(piece.row + 1, piece.column - 1);
                         index += 1;
@@ -114,7 +112,7 @@ public class MoveBox {
                 }
             }
         }
-        if(jumped && index !=0)
+        if(jumpingPiece != null && index !=0)
         {
             boxes[index] = new MoveBox(piece.row, piece.column);
         }
