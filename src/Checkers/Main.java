@@ -1,13 +1,16 @@
 
 package Checkers;
 
+import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.Date;
 import java.util.Iterator;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Calendar;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.HPos;
@@ -36,7 +39,8 @@ import javafx.stage.Stage;
 //TODO ADD IN SECOND PLAYER TURN WITH BLACK PIECES
 public class Main extends Application {
 	CheckerPiece jumpingPiece = null;
-	int playerTurn = 2;
+	int playerTurn = 1;
+	boolean hosting;
 
 	public static void main(String[] args) {
 		launch(args);
@@ -58,8 +62,77 @@ public class Main extends Application {
 		primaryStage.setTitle("Menu"); // Set the stage title
 		primaryStage.setScene(scene); // Place the scene in the stage
 		primaryStage.show(); // Display the stage
+		//Build the Server Here in a thread like this
+		/*
+			//initialize server socket
+        try {
+            ss = new ServerSocket(8000);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        //initialize IPaddress
+        try {
+            IPaddress = InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }*/
 
 	}
+	/*
+
+	//Here are the host game and join game functions
+	private static void hostGame() {
+		//UI: display IPaddress and screen waiting for opponent to connect
+
+		//NETWORK: wait for player to connect and assign socket and I/O streams - DONE
+		try {
+			//create socket to communicate with client
+			Socket socket = ss.accept();
+			hosting = true;
+			//initialize IO streams
+			in = new ObjectInputStream(socket.getInputStream());
+			out = new ObjectOutputStream(socket.getOutputStream());
+
+			new Thread( () -> {
+				while(true)
+				{
+					//Either reading from client or writing to client
+					//Based on playerTurn variable
+				}
+				}).start;
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private static void joinGame() {
+		String hostIPaddress;
+
+		//UI: have user enter an IP address to connect to, store IP address in the String variable "hostIPaddress"
+
+		//NETWORK: assign socket and I/O streams - DONE
+		try {
+			//create socket and connect to server
+			Socket socket = new Socket(hostIPaddress, 8000);
+			hosting = false;
+			//initialize IO streams
+			in = new ObjectInputStream(socket.getInputStream());
+			out = new ObjectOutputStream(socket.getOutputStream());
+
+			new Thread( () -> {
+				while(true)
+				{
+					//Either reading from server or writing to server
+					//based on playerTurn variable
+				}
+				}).start;
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}*/
 
 	private void mainMenu(BorderPane pane, double width, double height) {
 
@@ -126,6 +199,7 @@ public class Main extends Application {
 		menuBoxes[1].setOnMouseClicked(new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent event) {
+				//NETWORK - If server port exists then join game if not then host game
 				GameStart(pane, width, height);
 			}
 		});
@@ -188,7 +262,7 @@ public class Main extends Application {
 			// For each piece set up a click function
 
 			redPiece.piece.setOnMouseClicked(e -> {
-				if (playerTurn == 1) {
+				if (playerTurn == 1 /*&& hosting*/) {
 					// Generate all possible moves for that piece
 					if(jumpingPiece != null && redPiece != jumpingPiece)
 					{
@@ -207,64 +281,8 @@ public class Main extends Application {
 							box.setStroke(Color.TURQUOISE);
 							// For each of these create a click event
 							box.setOnMouseClicked(m -> {
-								CheckerPiece jumped = null;
-								// If we jumped have to keep repeating
-								if (jump) {
-									jumped = redPiece;
-									// Remove the piece we jumped over
-									int r = (redPiece.row + boxRow) / 2;
-									int c = (redPiece.column + boxColumn) / 2;
-									removeGraphic(paneG, r, c);
-									if (board[r][c].kinged)
-										removeGraphic(paneG, r, c);
-									board[r][c] = null;
-									//Check after jump to see if any jumps left
-									MoveBox[] boxesAfterJump = MoveBox.generate(redPiece, board, jumpingPiece);
-									if (boxesAfterJump[0] == null) {
-										// If we ran out of jumping moves
-										jumped = null;
-										changePlayer(playerTurn);
-									}
-								}
-								// When clicked we move the piece to that point on the board updating all
-								// variables of its move
-								// We didn't jump so we don't need to repeat
-								else {
-									changePlayer(playerTurn);
-								}
-
-								// All the code that progresses a turn no matter what happens
-								board[redPiece.row][redPiece.column] = null;
-								board[boxRow][boxColumn] = redPiece;
-								// updates graphics
-								removeGraphic(paneG, redPiece.row, redPiece.column);
-								paneG.add(redPiece.piece, boxColumn, boxRow);
-								if (redPiece.kinged) {
-									removeGraphic(paneG, redPiece.row, redPiece.column);
-									ImageView imageView = new ImageView(image);
-									imageView.setFitHeight(size * 0.75);
-									imageView.setFitWidth(size * 0.75);
-									paneG.add(imageView, boxColumn, boxRow);
-									paneG.setValignment(imageView, VPos.CENTER);
-									paneG.setHalignment(imageView, HPos.CENTER);
-								}
-
-								redPiece.row = boxRow;
-								redPiece.column = boxColumn;
-
-								if (boxRow == 0) {
-									redPiece.kinged = true;
-									ImageView imageView = new ImageView(image);
-									imageView.setFitHeight(size * 0.75);
-									imageView.setFitWidth(size * 0.75);
-									paneG.add(imageView, redPiece.column, redPiece.row);
-									paneG.setValignment(imageView, VPos.CENTER);
-									paneG.setHalignment(imageView, HPos.CENTER);
-								}
-
-								jumped(jumped);
-
-								removeBoxes(paneG);
+								//NETWORK - WRITE THIS DATA AND CALL MOVE FUNCTION ON SERVER/CLIENT
+								move(redPiece, jump, boxRow, boxColumn, paneG, board, image,  size);
 							});
 							paneG.add(box, boxColumn, boxRow);
 							paneG.setValignment(box, VPos.CENTER);
@@ -276,7 +294,7 @@ public class Main extends Application {
 			});
 			// Same as above but for black pieces
 			blackPiece.piece.setOnMouseClicked(e -> {
-				if (playerTurn == 2) {
+				if (playerTurn == 2 /*&& !hosting*/) {
 					// Generate all possible moves for that piece
 					if(jumpingPiece != null && blackPiece != jumpingPiece)
 					{
@@ -295,64 +313,8 @@ public class Main extends Application {
 							box.setStroke(Color.TURQUOISE);
 							// For each of these create a click event
 							box.setOnMouseClicked(m -> {
-								CheckerPiece jumped = null;
-								// If we jumped have to keep repeating
-								if (jump) {
-									jumped = blackPiece;
-									// Remove the piece we jumped over
-									int r = (blackPiece.row + boxRow) / 2;
-									int c = (blackPiece.column + boxColumn) / 2;
-									removeGraphic(paneG, r, c);
-									if (board[r][c].kinged)
-										removeGraphic(paneG, r, c);
-									board[r][c] = null;
-									MoveBox[] boxesAfterJump = MoveBox.generate(redPiece, board, jumpingPiece);
-									if (jumpingPiece != null && boxesAfterJump[0] == null) {
-										// If we ran out of jumping moves
-										jumped = null;
-										changePlayer(playerTurn);
-									}
-								}
-								// When clicked we move the piece to that point on the board updating all
-								// variables of its move
-								// We didn't jump so we don't need to repeat
-								else {
-									// Thread to update GUI
-									changePlayer(playerTurn);
-								}
-
-								// All the code that progresses a turn no matter what happens
-
-								board[blackPiece.row][blackPiece.column] = null;
-								board[boxRow][boxColumn] = blackPiece;
-								// updates graphics
-								removeGraphic(paneG, blackPiece.row, blackPiece.column);
-								paneG.add(blackPiece.piece, boxColumn, boxRow);
-								if (blackPiece.kinged) {
-									removeGraphic(paneG, blackPiece.row, blackPiece.column);
-									ImageView imageView = new ImageView(image);
-									imageView.setFitHeight(size * 0.75);
-									imageView.setFitWidth(size * 0.75);
-									paneG.add(imageView, boxColumn, boxRow);
-									paneG.setValignment(imageView, VPos.CENTER);
-									paneG.setHalignment(imageView, HPos.CENTER);
-								}
-
-								blackPiece.row = boxRow;
-								blackPiece.column = boxColumn;
-
-								if (boxRow == 7) {
-									blackPiece.kinged = true;
-									ImageView imageView = new ImageView(image);
-									imageView.setFitHeight(size * 0.75);
-									imageView.setFitWidth(size * 0.75);
-									paneG.add(imageView, blackPiece.column, blackPiece.row);
-									paneG.setValignment(imageView, VPos.CENTER);
-									paneG.setHalignment(imageView, HPos.CENTER);
-								}
-
-								jumped(jumped);
-								removeBoxes(paneG);
+								//NETWORK - WRITE THIS DATA AND CALL MOVE FUNCTION ON SERVER/CLIENT
+								move(blackPiece, jump, boxRow, boxColumn, paneG, board, image,  size);
 							});
 							paneG.add(box, boxColumn, boxRow);
 							paneG.setValignment(box, VPos.CENTER);
@@ -463,6 +425,69 @@ public class Main extends Application {
 				break;
 			}
 		}
+	}
+
+	public void move(CheckerPiece piece, boolean jump, int boxRow, int boxColumn, GridPane paneG, CheckerPiece[][] board,
+					 Image image, double size)
+	{
+		CheckerPiece jumped = null;
+		// If we jumped have to keep repeating
+		if (jump) {
+			jumped(piece);
+			// Remove the piece we jumped over
+			int r = (piece.row + boxRow) / 2;
+			int c = (piece.column + boxColumn) / 2;
+			removeGraphic(paneG, r, c);
+			if (board[r][c].kinged)
+				removeGraphic(paneG, r, c);
+			board[r][c] = null;
+			//Check after jump to see if any jumps left
+			MoveBox[] boxesAfterJump = MoveBox.generate(piece, board, jumpingPiece);
+			if (boxesAfterJump[0] == null) {
+				// If we ran out of jumping moves
+				jumped = null;
+				changePlayer(playerTurn);
+			}
+		}
+		// When clicked we move the piece to that point on the board updating all
+		// variables of its move
+		// We didn't jump so we don't need to repeat
+		else {
+			changePlayer(playerTurn);
+		}
+
+		// All the code that progresses a turn no matter what happens
+		board[piece.row][piece.column] = null;
+		board[boxRow][boxColumn] = piece;
+		// updates graphics
+		removeGraphic(paneG, piece.row, piece.column);
+		paneG.add(piece.piece, boxColumn, boxRow);
+		if (piece.kinged) {
+			removeGraphic(paneG, piece.row, piece.column);
+			ImageView imageView = new ImageView(image);
+			imageView.setFitHeight(size * 0.75);
+			imageView.setFitWidth(size * 0.75);
+			paneG.add(imageView, boxColumn, boxRow);
+			paneG.setValignment(imageView, VPos.CENTER);
+			paneG.setHalignment(imageView, HPos.CENTER);
+		}
+
+		piece.row = boxRow;
+		piece.column = boxColumn;
+
+		if (boxRow == 0) {
+			piece.kinged = true;
+			ImageView imageView = new ImageView(image);
+			imageView.setFitHeight(size * 0.75);
+			imageView.setFitWidth(size * 0.75);
+			paneG.add(imageView, piece.column, piece.row);
+			paneG.setValignment(imageView, VPos.CENTER);
+			paneG.setHalignment(imageView, HPos.CENTER);
+		}
+
+		jumped(jumped);
+
+		removeBoxes(paneG);
 	}
 
 }
