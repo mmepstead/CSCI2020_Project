@@ -16,8 +16,8 @@ public class MoveBox {
     //Generating all possible moves and storing them in an array
     public static MoveBox[] generate(CheckerPiece piece, CheckerPiece[][] board, boolean jumped)
     {
-        System.out.println(piece.column);
-        System.out.println(piece.row);
+        //System.out.println(piece.column);
+        //System.out.println(piece.row);
         int index = 0;
         MoveBox[] boxes = new MoveBox[4];
         //Piece moving Up the board
