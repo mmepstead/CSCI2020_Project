@@ -9,13 +9,9 @@ repositories {
 dependencies {
 
 }
-
-task application {
-    mainClassName = 'Main'
-}
-
-run {
-    args = ['']
+task runGame(type:JavaExec) {
+    sourceSets.main.java.srcDirs = ['src']
+    mainClassName = "Checkers.Main"
 }
 
 apply plugin: 'java'
