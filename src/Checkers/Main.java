@@ -309,7 +309,7 @@ public class Main extends Application {
 		{
 			while(true)
 			{
-				//Very Necessarry PrintLN!
+				//Very necessary PrintLN!
 				System.out.println("");
 				if(moveFinished && !myTurn)
 				{
@@ -507,6 +507,7 @@ public class Main extends Application {
 			CheckerPiece jumped = null;
 			// If we jumped have to keep repeating
 			if (jump) {
+				jumped = piece;
 				jumped(piece);
 				// Remove the piece we jumped over
 				int r = (piece.row + boxRow) / 2;
@@ -521,15 +522,23 @@ public class Main extends Application {
 				if (board[r][c].kinged) {
 					removeGraphic(paneG, r, c);
 				}
+				board[piece.row][piece.column] = null;
+				board[boxRow][boxColumn] = piece;
+				piece.row = boxRow;
+				piece.column = boxColumn;
 				board[r][c] = null;
 				//Check after jump to see if any jumps left
 				if (myTurn) {
 					MoveBox[] boxesAfterJump = MoveBox.generate(piece, board, jumpingPiece);
-					if (boxesAfterJump[0] == null) {
+					if (boxesAfterJump[0] == null && myTurn) {
 						// If we ran out of jumping moves
 						jumped = null;
 						myTurn = false;
 					}
+				}
+				else
+				{
+					jumped = null;
 				}
 			}
 			// When clicked we move the piece to that point on the board updating all
