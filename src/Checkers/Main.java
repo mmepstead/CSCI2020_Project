@@ -636,7 +636,7 @@ public class Main extends Application {
 			int numberOfMoves = in.readInt();
 			System.out.println(numberOfMoves);
 			for(int i = 0; i < numberOfMoves; i++){
-				System.out.println("WE FUCKING LOOPED");
+				System.out.println("loop");
 				int row = in.readInt();
 				int col = in.readInt();
 				boolean jump = in.readBoolean();
