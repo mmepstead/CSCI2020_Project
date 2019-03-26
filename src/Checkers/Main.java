@@ -16,9 +16,7 @@ import javafx.geometry.HPos;
 import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -512,11 +510,51 @@ public class Main extends Application {
 				// Remove the piece we jumped over
 				int r = (piece.row + boxRow) / 2;
 				int c = (piece.column + boxColumn) / 2;
+				//I know its duplicate but its the best I got right now.
 				if (board[r][c].piece.getFill() == Color.RED) {
 					redPieces -= 1;
+					if(redPieces == 0 && playerNumber == 1)
+					{
+						Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Congrats You Win!", ButtonType.YES);
+						alert.showAndWait();
+
+						if (alert.getResult() == ButtonType.YES) {
+							System.out.println("GAME OVER");
+						}
+					}
+					else if(redPieces == 0 && playerNumber == 2)
+					{
+						Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Sorry you lost.", ButtonType.YES);
+						alert.showAndWait();
+
+						if (alert.getResult() == ButtonType.YES) {
+							System.out.println("GAME OVER");
+						}
+					}
 				}
 				if (board[r][c].piece.getFill() == Color.BLACK) {
 					blackPieces -= 1;
+					if(blackPieces == 0)
+					{
+						if(blackPieces == 0 && playerNumber == 1)
+						{
+							Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Congrats You Win!", ButtonType.YES);
+							alert.showAndWait();
+
+							if (alert.getResult() == ButtonType.YES) {
+								System.exit(1);
+							}
+						}
+						else if(blackPieces == 0 && playerNumber == 2)
+						{
+							Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Sorry you lost.", ButtonType.YES);
+							alert.showAndWait();
+
+							if (alert.getResult() == ButtonType.YES) {
+								System.exit(1);
+							}
+						}
+					}
 				}
 				removeGraphic(paneG, r, c);
 				if (board[r][c].kinged) {
