@@ -70,8 +70,13 @@ import static java.lang.Thread.sleep;
 //TODO ADD IN SECOND PLAYER TURN WITH BLACK PIECES
 public class Main extends Application {
 	CheckerPiece jumpingPiece = null;
+
 	static boolean myTurn;
-	boolean hosting;
+
+	int redPieces = 12;
+	int blackPieces = 12;
+	static int playerNumber;
+
 
 	//Networking variables
 	static ServerSocket ss;
@@ -121,6 +126,7 @@ public class Main extends Application {
 	//Here are the host game and join game functions
 	private static void hostGame() {
 		myTurn = true; //host goes first
+		playerNumber = 1;
 		turn = new ArrayList<>();
 		//UI: display IPaddress and screen waiting for opponent to connect
 
@@ -156,6 +162,7 @@ public class Main extends Application {
 
 	private static void joinGame() {
 		myTurn = false; //host goes first
+		playerNumber = 2;
 		String hostIPaddress = "localHost";
 
 		//UI: have user enter an IP address to connect to, store IP address in the String variable "hostIPaddress"
@@ -322,6 +329,8 @@ public class Main extends Application {
 			piece.piece.setOnMouseClicked(e -> {
 
 				//used to hold all the moves the player during this turn so they
+				ArrayList turn = new ArrayList();	//used to hold all the moves the player during this turn so they
+
 				//can be sent over the network to the opponent
 				// Generate all possible moves for that piece
 				if (myTurn) {
@@ -467,6 +476,12 @@ public class Main extends Application {
 			// Remove the piece we jumped over
 			int r = (piece.row + boxRow) / 2;
 			int c = (piece.column + boxColumn) / 2;
+			if (board[r][c].piece.getFill() == Color.RED) {
+				redPieces -= 1;
+			}
+			if (board[r][c].piece.getFill() == Color.BLACK) {
+				blackPieces -= 1;
+			}
 			removeGraphic(paneG, r, c);
 			if (board[r][c].kinged)
 				removeGraphic(paneG, r, c);
@@ -484,58 +499,61 @@ public class Main extends Application {
 		// When clicked we move the piece to that point on the board updating all
 		// variables of its move
 		// We didn't jump so we don't need to repeat
+
 		else if (myTurn) {
 			endTurn(paneG, board, image, size);
-		}
+		}else{
+				if (blackPieces == 0) {
+					//Player 1 wins
+				}
+				if (redPieces == 0) {
+					//Player 2 wins
+				}
+			}
 
-		// All the code that progresses a turn no matter what happens
-		board[piece.row][piece.column] = null;
-		board[boxRow][boxColumn] = piece;
-		// updates graphics
-		removeGraphic(paneG, piece.row, piece.column);
-		paneG.add(piece.piece, boxColumn, boxRow);
-		if (piece.kinged) {
+			// All the code that progresses a turn no matter what happens
+			board[piece.row][piece.column] = null;
+			board[boxRow][boxColumn] = piece;
+			// updates graphics
 			removeGraphic(paneG, piece.row, piece.column);
-			ImageView imageView = new ImageView(image);
-			imageView.setFitHeight(size * 0.75);
-			imageView.setFitWidth(size * 0.75);
-			paneG.add(imageView, boxColumn, boxRow);
-			paneG.setValignment(imageView, VPos.CENTER);
-			paneG.setHalignment(imageView, HPos.CENTER);
+			paneG.add(piece.piece, boxColumn, boxRow);
+			if (piece.kinged) {
+				removeGraphic(paneG, piece.row, piece.column);
+				ImageView imageView = new ImageView(image);
+				imageView.setFitHeight(size * 0.75);
+				imageView.setFitWidth(size * 0.75);
+				paneG.add(imageView, boxColumn, boxRow);
+				paneG.setValignment(imageView, VPos.CENTER);
+				paneG.setHalignment(imageView, HPos.CENTER);
+			}
+
+			piece.row = boxRow;
+			piece.column = boxColumn;
+
+			if (boxRow == 0 && piece.piece.getFill() == Color.RED) {
+				piece.kinged = true;
+				ImageView imageView = new ImageView(image);
+				imageView.setFitHeight(size * 0.75);
+				imageView.setFitWidth(size * 0.75);
+				paneG.add(imageView, piece.column, piece.row);
+				paneG.setValignment(imageView, VPos.CENTER);
+				paneG.setHalignment(imageView, HPos.CENTER);
+			}
+			if (boxRow == 7 && piece.piece.getFill() == Color.BLACK) {
+				piece.kinged = true;
+				ImageView imageView = new ImageView(image);
+				imageView.setFitHeight(size * 0.75);
+				imageView.setFitWidth(size * 0.75);
+				paneG.add(imageView, piece.column, piece.row);
+				paneG.setValignment(imageView, VPos.CENTER);
+				paneG.setHalignment(imageView, HPos.CENTER);
+			}
+
+			jumped(jumped);
+
+			removeBoxes(paneG);
 		}
 
-		piece.row = boxRow;
-		piece.column = boxColumn;
-
-		if (boxRow == 0) {
-			piece.kinged = true;
-			ImageView imageView = new ImageView(image);
-			imageView.setFitHeight(size * 0.75);
-			imageView.setFitWidth(size * 0.75);
-			paneG.add(imageView, piece.column, piece.row);
-			paneG.setValignment(imageView, VPos.CENTER);
-			paneG.setHalignment(imageView, HPos.CENTER);
-		}
-
-		jumped(jumped);
-
-		removeBoxes(paneG);
-	}
-
-	/*void executeOpponentMove(){
-
-		for(int i = 0; i < turn.size(); i++){
-			in.
-		}
-
-
-
-		int pieceRow = in.readInt();
-		int pieceCol = in.readInt();
-		boolean jump = in.readBoolean();
-		int boxRow = in.readInt();
-		int boxCol = in.readInt();
-	}*/
 
 	void executeOpponentTurn(GridPane paneG, CheckerPiece[][] board, Image image, double size) {
 		//NETWORK - get opponent's turn
