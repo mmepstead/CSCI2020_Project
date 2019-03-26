@@ -81,8 +81,8 @@ public class Main extends Application {
 	//Networking variables
 	static ServerSocket ss;
 	static Socket socket;
-	static ObjectInputStream in;
-	static ObjectOutputStream out;
+	static DataInputStream in;
+	static DataOutputStream out;
 	static String IPaddress;
 	static ArrayList<Move> turn;
 
@@ -107,12 +107,6 @@ public class Main extends Application {
 		primaryStage.setScene(scene); // Place the scene in the stage
 		primaryStage.show(); // Display the stage
 
-		//initialize server socket
-		try {
-			ss = new ServerSocket(8000);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 
 		//initialize IPaddress
 		try {
@@ -128,17 +122,25 @@ public class Main extends Application {
 		myTurn = true; //host goes first
 		playerNumber = 1;
 		turn = new ArrayList<>();
+		//initialize server socket
+		try {
+			ss = new ServerSocket(8000);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		//UI: display IPaddress and screen waiting for opponent to connect
 
 		//NETWORK: wait for player to connect and assign socket and I/O streams - DONE
 		try {
 			//create socket to communicate with client
+
 			socket = ss.accept();
 			//hosting = true;
 			//initialize IO streams
-			in = new ObjectInputStream(socket.getInputStream());
-			out = new ObjectOutputStream(socket.getOutputStream());
 
+			in = new DataInputStream(socket.getInputStream());
+			out = new DataOutputStream(socket.getOutputStream());
+			System.out.println("hi");
 			/*new Thread( () -> {
 				while(true)
 				{
@@ -156,6 +158,7 @@ public class Main extends Application {
 							//with opponent and terminate game if connection is lost, returning player to the menu with
 							//a message that the connection was lost
 		} catch (IOException e) {
+			System.out.println("Exception1");
 			e.printStackTrace();
 		}
 	}
@@ -163,18 +166,17 @@ public class Main extends Application {
 	private static void joinGame() {
 		myTurn = false; //host goes first
 		playerNumber = 2;
-		String hostIPaddress = "localHost";
-
 		//UI: have user enter an IP address to connect to, store IP address in the String variable "hostIPaddress"
 
 		//NETWORK: assign socket and I/O streams - DONE
 		try {
 			//create socket and connect to server
-			socket = new Socket(hostIPaddress, 8000);
+			socket = new Socket("localhost", 8000);
 			//initialize IO streams
-			in = new ObjectInputStream(socket.getInputStream());
-			out = new ObjectOutputStream(socket.getOutputStream());
-
+			System.out.println("hello1");
+			in = new DataInputStream(socket.getInputStream());
+			System.out.println(in);
+			out = new DataOutputStream(socket.getOutputStream());
 			/*new Thread( () -> {
 				while(true)
 				{
@@ -186,6 +188,7 @@ public class Main extends Application {
 			//a message that the connection was lost
 
 		} catch (IOException e) {
+			System.out.println("Exception");
 			e.printStackTrace();
 		}
 	}
@@ -248,6 +251,7 @@ public class Main extends Application {
 			@Override
 			public void handle(MouseEvent event) {
 				hostGame();
+				System.out.println("Host");
 				GameStart(pane, width, height);
 			}
 		});
@@ -257,6 +261,7 @@ public class Main extends Application {
 			@Override
 			public void handle(MouseEvent event) {
 				joinGame();
+				System.out.println("Join");
 				GameStart(pane, width, height);
 			}
 		});
@@ -420,11 +425,12 @@ public class Main extends Application {
 	public void endTurn(GridPane paneG, CheckerPiece[][] board, Image image, double size) {
 		myTurn = false;
 		//NETWORK - send turn data to opponent
-		try {
+
+		/*try {
 			out.writeObject(turn);
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		}*/
 		executeOpponentTurn(paneG,board,image,size);
 	}
 
@@ -557,13 +563,13 @@ public class Main extends Application {
 
 	void executeOpponentTurn(GridPane paneG, CheckerPiece[][] board, Image image, double size) {
 		//NETWORK - get opponent's turn
-		try {
+		/*try {
 			turn = (ArrayList<Move>) in.readObject();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
-		}
+		}*/
 		//execute opponent's turn
 		for (Move m : turn) {
 			move(board[m.pieceRow][m.pieceCol], m.jump, m.boxRow, m.boxCol, paneG, board, image, size);
