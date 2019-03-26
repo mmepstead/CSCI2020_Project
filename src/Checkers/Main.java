@@ -317,7 +317,6 @@ public class Main extends Application {
 					//
 				ArrayList turn = new ArrayList();	//used to hold all the moves the player during this turn so they
 				//can be sent over the network to the opponent
-
 				// Generate all possible moves for that piece
 				if(jumpingPiece != null && piece != jumpingPiece)
 				{
@@ -506,9 +505,12 @@ public class Main extends Application {
 		}
 
 		jumped(jumped);
+		System.out.println(playerTurn);
 
 		removeBoxes(paneG);
 	}
+
+}
 
 	/*void executeOpponentMove(){
 
@@ -538,4 +540,4 @@ public class Main extends Application {
 			this.boxCol = boxCol;
 		}
 	}*/
-}
+
