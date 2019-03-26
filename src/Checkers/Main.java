@@ -2,8 +2,7 @@
 package Checkers;
 
 import java.io.*;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.ArrayList;
@@ -35,12 +34,48 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.Calendar;
+
+import javafx.application.Application;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.geometry.HPos;
+import javafx.geometry.VPos;
+import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
+import javafx.stage.Stage;
 
 //TODO ADD IN SECOND PLAYER TURN WITH BLACK PIECES
 public class Main extends Application {
 	CheckerPiece jumpingPiece = null;
 	int playerTurn = 1;
 	boolean hosting;
+
+	//Networking variables
+	static ServerSocket ss;
+	static ObjectInputStream in;
+	static ObjectOutputStream out;
+	String IPaddress;
 
 	public static void main(String[] args) {
 		launch(args);
@@ -62,24 +97,24 @@ public class Main extends Application {
 		primaryStage.setTitle("Menu"); // Set the stage title
 		primaryStage.setScene(scene); // Place the scene in the stage
 		primaryStage.show(); // Display the stage
-		//Build the Server Here in a thread like this
-		/*
-			//initialize server socket
-        try {
-            ss = new ServerSocket(8000);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
-        //initialize IPaddress
-        try {
-            IPaddress = InetAddress.getLocalHost().getHostAddress();
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }*/
+		//Initialize Server Socket and IPAddress
+		//initialize server socket
+		try {
+			ss = new ServerSocket(8000);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		//initialize IPaddress
+		try {
+			IPaddress = InetAddress.getLocalHost().getHostAddress();
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
 
 	}
-	/*
+
 
 	//Here are the host game and join game functions
 	private static void hostGame() {
@@ -89,18 +124,27 @@ public class Main extends Application {
 		try {
 			//create socket to communicate with client
 			Socket socket = ss.accept();
-			hosting = true;
+			//hosting = true;
 			//initialize IO streams
 			in = new ObjectInputStream(socket.getInputStream());
 			out = new ObjectOutputStream(socket.getOutputStream());
 
-			new Thread( () -> {
+			/*new Thread( () -> {
 				while(true)
 				{
-					//Either reading from client or writing to client
-					//Based on playerTurn variable
+					//NETWORK - read opponent's move information
+					int pieceRow = in.readInt();
+					int pieceCol = in.readInt();
+					CheckerPiece piece = board[pieceRow][pieceCol];
+					boolean jump = in.readBoolean();
+					int boxRow = in.readInt();
+					int boxCol = in.readInt();
+					//Call move function to execute opponent's move
+					move(piece, jump, boxRow, boxCol)
 				}
-				}).start;
+				}).start;*/	//implementing this sequentially instead, if time should check here in a thread to ensure
+			//with opponent and terminate game if connection is lost, returning player to the menu with
+			//a message that the connection was lost
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -108,7 +152,7 @@ public class Main extends Application {
 	}
 
 	private static void joinGame() {
-		String hostIPaddress;
+		String hostIPaddress = "";
 
 		//UI: have user enter an IP address to connect to, store IP address in the String variable "hostIPaddress"
 
@@ -116,23 +160,25 @@ public class Main extends Application {
 		try {
 			//create socket and connect to server
 			Socket socket = new Socket(hostIPaddress, 8000);
-			hosting = false;
+			//hosting = false;
 			//initialize IO streams
 			in = new ObjectInputStream(socket.getInputStream());
 			out = new ObjectOutputStream(socket.getOutputStream());
 
-			new Thread( () -> {
+			/*new Thread( () -> {
 				while(true)
 				{
 					//Either reading from server or writing to server
 					//based on playerTurn variable
 				}
-				}).start;
+				}).start;*/ //implementing this sequentially instead, if time should check here in a thread to ensure
+			//with opponent and terminate game if connection is lost, returning player to the menu with
+			//a message that the connection was lost
 
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}*/
+	}
 
 	private void mainMenu(BorderPane pane, double width, double height) {
 
@@ -247,28 +293,41 @@ public class Main extends Application {
 		Image image = new Image(input);
 
 		// testing setup
-		for (int i = 0; i < 12; i += 1) {
+		for (int i = 0; i < 24; i += 1) {
 			// Set height and widths for columns
 			// paneG.getColumnConstraints().add(new ColumnConstraints(height));
 			// paneG.getRowConstraints().add(new RowConstraints(height));
-			// Generate 8 red pieces for testing
-			CheckerPiece blackPiece = new CheckerPiece(Color.BLACK, (i * 2 + ((i / 4) % 2)) % 8, i / 4,
-					(size * 3.0) / 8.0);
-			CheckerPiece redPiece = new CheckerPiece(Color.RED, (i * 2 + ((i / 4 + 1) % 2)) % 8, 7 - i / 4,
-					(size * 3.0) / 8.0);
+
+			//create new piece
+			int pieceRow, pieceCol;
+			Color pieceColor;
+			if(i<12){
+				pieceRow = i / 4;
+				pieceCol = (i * 2 + ((i / 4) % 2)) % 8;
+				pieceColor = Color.BLACK;
+			}else{
+				pieceRow = 7 - (i-12) / 4;
+				pieceCol = ((i-12) * 2 + (((i-12) / 4 + 1) % 2)) % 8;
+				pieceColor = Color.RED;
+			}
+			CheckerPiece piece = new CheckerPiece(pieceColor,pieceCol,pieceRow,(size * 3.0) / 8.0);
+
 			// Place them in the board
-			board[7 - i / 4][(i * 2 + ((i / 4 + 1) % 2)) % 8] = redPiece;
-			board[i / 4][(i * 2 + ((i / 4) % 2)) % 8] = blackPiece;
+			board[pieceRow][pieceCol] = piece;
+
 			// For each piece set up a click function
-
-			redPiece.piece.setOnMouseClicked(e -> {
+			piece.piece.setOnMouseClicked(e -> {
 				if (playerTurn == 1 /*&& hosting*/) {
+					//
+					ArrayList turn = new ArrayList();	//used to hold all the moves the player during this turn so they
+					//can be sent over the network to the opponent
+
 					// Generate all possible moves for that piece
-					if(jumpingPiece != null && redPiece != jumpingPiece)
+					if(jumpingPiece != null && piece != jumpingPiece)
 					{
 						return;
 					}
-					MoveBox[] boxes = MoveBox.generate(redPiece, board, jumpingPiece);
+					MoveBox[] boxes = MoveBox.generate(piece, board, jumpingPiece);
 					for (int j = 0; j < 4; j += 1) {
 						// For all the possible moves add a small square to show where on the board the
 						// are
@@ -281,8 +340,10 @@ public class Main extends Application {
 							box.setStroke(Color.TURQUOISE);
 							// For each of these create a click event
 							box.setOnMouseClicked(m -> {
-								//NETWORK - WRITE THIS DATA AND CALL MOVE FUNCTION ON SERVER/CLIENT
-								move(redPiece, jump, boxRow, boxColumn, paneG, board, image,  size);
+								//add move to turn ArrayList
+								//turn.add(new Move(piece.row,piece.column,jump,boxRow,boxColumn));
+								//execute move
+								move(piece, jump, boxRow, boxColumn, paneG, board, image,  size);
 							});
 							paneG.add(box, boxColumn, boxRow);
 							paneG.setValignment(box, VPos.CENTER);
@@ -290,48 +351,11 @@ public class Main extends Application {
 						}
 					}
 				}
-
 			});
-			// Same as above but for black pieces
-			blackPiece.piece.setOnMouseClicked(e -> {
-				if (playerTurn == 2 /*&& !hosting*/) {
-					// Generate all possible moves for that piece
-					if(jumpingPiece != null && blackPiece != jumpingPiece)
-					{
-						return;
-					}
-					MoveBox[] boxes = MoveBox.generate(blackPiece, board, jumpingPiece);
-					for (int j = 0; j < 4; j += 1) {
-						// For all the possible moves add a small square to show where on the board the
-						// are
-						if (boxes[j] != null) {
-							Rectangle box = new Rectangle(size * 0.75, size * 0.75);
-							box.setFill(Color.TRANSPARENT);
-							int boxRow = boxes[j].row;
-							boolean jump = boxes[j].jump;
-							int boxColumn = boxes[j].column;
-							box.setStroke(Color.TURQUOISE);
-							// For each of these create a click event
-							box.setOnMouseClicked(m -> {
-								//NETWORK - WRITE THIS DATA AND CALL MOVE FUNCTION ON SERVER/CLIENT
-								move(blackPiece, jump, boxRow, boxColumn, paneG, board, image,  size);
-							});
-							paneG.add(box, boxColumn, boxRow);
-							paneG.setValignment(box, VPos.CENTER);
-							paneG.setHalignment(box, HPos.CENTER);
-						}
-					}
-				}
-
-			});
-
-			paneG.add(blackPiece.piece, (i * 2 + ((i / 4) % 2)) % 8, i / 4);
-			paneG.add(redPiece.piece, (i * 2 + ((i / 4 + 1) % 2)) % 8, 7 - i / 4);
-
-			paneG.setValignment(blackPiece.piece, VPos.CENTER);
-			paneG.setHalignment(blackPiece.piece, HPos.CENTER);
-			paneG.setValignment(redPiece.piece, VPos.CENTER);
-			paneG.setHalignment(redPiece.piece, HPos.CENTER);
+			//add piece to pane
+			paneG.add(piece.piece, pieceCol, pieceRow);
+			paneG.setValignment(piece.piece, VPos.CENTER);
+			paneG.setHalignment(piece.piece, HPos.CENTER);
 		}
 
 		// sets up the log and the chat for the game and places them onto a
@@ -490,4 +514,32 @@ public class Main extends Application {
 		removeBoxes(paneG);
 	}
 
+	/*void executeOpponentMove(){
+
+		for(int i = 0; i < turn.size(); i++){
+			in.
+		}
+
+
+
+		int pieceRow = in.readInt();
+		int pieceCol = in.readInt();
+		boolean jump = in.readBoolean();
+		int boxRow = in.readInt();
+		int boxCol = in.readInt();
+	}
+
+	//a Move class array is used to send and recieve turns over network
+	class Move{
+		public int pieceRow, pieceCol, boxRow, boxCol;
+		public boolean jump;
+
+		Move(int pieceRow, int pieceCol, boolean jump, int boxRow, int boxCol){
+			this.pieceRow = pieceRow;
+			this.pieceCol = pieceCol;
+			this.jump = jump;
+			this.boxRow = boxRow;
+			this.boxCol = boxCol;
+		}
+	}*/
 }
