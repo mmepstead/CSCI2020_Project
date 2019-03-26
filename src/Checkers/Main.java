@@ -65,17 +65,21 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
+import static java.lang.Thread.sleep;
+
 //TODO ADD IN SECOND PLAYER TURN WITH BLACK PIECES
 public class Main extends Application {
 	CheckerPiece jumpingPiece = null;
-	int playerTurn = 1;
+	static boolean myTurn;
 	boolean hosting;
 
 	//Networking variables
 	static ServerSocket ss;
+	static Socket socket;
 	static ObjectInputStream in;
 	static ObjectOutputStream out;
-	String IPaddress;
+	static String IPaddress;
+	static ArrayList<Move> turn;
 
 	public static void main(String[] args) {
 		launch(args);
@@ -116,12 +120,14 @@ public class Main extends Application {
 
 	//Here are the host game and join game functions
 	private static void hostGame() {
+		myTurn = true; //host goes first
+		turn = new ArrayList<>();
 		//UI: display IPaddress and screen waiting for opponent to connect
 
 		//NETWORK: wait for player to connect and assign socket and I/O streams - DONE
 		try {
 			//create socket to communicate with client
-			Socket socket = ss.accept();
+			socket = ss.accept();
 			//hosting = true;
 			//initialize IO streams
 			in = new ObjectInputStream(socket.getInputStream());
@@ -140,25 +146,24 @@ public class Main extends Application {
 					//Call move function to execute opponent's move
 					move(piece, jump, boxRow, boxCol)
 				}
-				}).start;*/	//implementing this sequentially instead, if time should check here in a thread to ensure
-			//with opponent and terminate game if connection is lost, returning player to the menu with
-			//a message that the connection was lost
-
+				}).start;*/ //implementing this sequentially instead, if time should check here in a thread to ensure
+							//with opponent and terminate game if connection is lost, returning player to the menu with
+							//a message that the connection was lost
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
 	private static void joinGame() {
-		String hostIPaddress = "";
+		myTurn = false; //host goes first
+		String hostIPaddress = "localHost";
 
 		//UI: have user enter an IP address to connect to, store IP address in the String variable "hostIPaddress"
 
 		//NETWORK: assign socket and I/O streams - DONE
 		try {
 			//create socket and connect to server
-			Socket socket = new Socket(hostIPaddress, 8000);
-			//hosting = false;
+			socket = new Socket(hostIPaddress, 8000);
 			//initialize IO streams
 			in = new ObjectInputStream(socket.getInputStream());
 			out = new ObjectOutputStream(socket.getOutputStream());
@@ -170,8 +175,8 @@ public class Main extends Application {
 					//based on playerTurn variable
 				}
 				}).start;*/ //implementing this sequentially instead, if time should check here in a thread to ensure
-							//with opponent and terminate game if connection is lost, returning player to the menu with
-							//a message that the connection was lost
+			//with opponent and terminate game if connection is lost, returning player to the menu with
+			//a message that the connection was lost
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -231,30 +236,31 @@ public class Main extends Application {
 			});
 		}
 
-		// button for offline play
+		// button for hosting game
 		menuBoxes[0].setOnMouseClicked(new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent event) {
+				hostGame();
 				GameStart(pane, width, height);
 			}
 		});
 		// Button for on line play
-		// THIS IS THE BUTTON THAT SHOULD LEAD TO THE ONLINE FUNCTIONALITY
+		// button for joining game
 		menuBoxes[1].setOnMouseClicked(new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent event) {
-				//NETWORK - If server port exists then join game if not then host game
+				joinGame();
 				GameStart(pane, width, height);
 			}
 		});
 
 		// Font.getFamilies() prints out all the available fonts
 		// setting the text for the buttons on the main menu
-		Text offline = new Text(menuBoxes[0].getCenterX() - 30, menuBoxes[0].getCenterY() + 5, "Offline");
+		Text offline = new Text(menuBoxes[0].getCenterX() - 30, menuBoxes[0].getCenterY() + 5, "Host Game");
 		offline.setFill(Color.WHITE);
 		offline.setFont(new Font("Times New Roman", 18));
 		paneG.getChildren().add(offline);
-		Text online = new Text(menuBoxes[1].getCenterX() - 25, menuBoxes[1].getCenterY() + 5, "Online");
+		Text online = new Text(menuBoxes[1].getCenterX() - 25, menuBoxes[1].getCenterY() + 5, "Join Game");
 		online.setFill(Color.WHITE);
 		online.setFont(new Font("Times New Roman", 18));
 		paneG.getChildren().add(online);
@@ -278,7 +284,7 @@ public class Main extends Application {
 			}
 		}
 
-		// Setup a board for checks
+		// Setup a board for checker pieces
 		CheckerPiece[][] board = new CheckerPiece[8][8];
 		// imports the "king" image
 		FileInputStream input = null;
@@ -298,54 +304,54 @@ public class Main extends Application {
 			//create new piece
 			int pieceRow, pieceCol;
 			Color pieceColor;
-			if(i<12){
+			if (i < 12) {
 				pieceRow = i / 4;
 				pieceCol = (i * 2 + ((i / 4) % 2)) % 8;
 				pieceColor = Color.BLACK;
-			}else{
-				pieceRow = 7 - (i-12) / 4;
-				pieceCol = ((i-12) * 2 + (((i-12) / 4 + 1) % 2)) % 8;
+			} else {
+				pieceRow = 7 - (i - 12) / 4;
+				pieceCol = ((i - 12) * 2 + (((i - 12) / 4 + 1) % 2)) % 8;
 				pieceColor = Color.RED;
 			}
-			CheckerPiece piece = new CheckerPiece(pieceColor,pieceCol,pieceRow,(size * 3.0) / 8.0);
+			CheckerPiece piece = new CheckerPiece(pieceColor, pieceCol, pieceRow, (size * 3.0) / 8.0);
 
 			// Place them in the board
 			board[pieceRow][pieceCol] = piece;
 
 			// For each piece set up a click function
 			piece.piece.setOnMouseClicked(e -> {
-					//
-				ArrayList turn = new ArrayList();	//used to hold all the moves the player during this turn so they
+
+				//used to hold all the moves the player during this turn so they
 				//can be sent over the network to the opponent
 				// Generate all possible moves for that piece
-				if(jumpingPiece != null && piece != jumpingPiece)
-				{
-					return;
-				}
-				MoveBox[] boxes = MoveBox.generate(piece, board, jumpingPiece);
-				for (int j = 0; j < 4; j += 1) {
-					// For all the possible moves add a small square to show where on the board the
-					// are
-					if (boxes[j] != null) {
-						Rectangle box = new Rectangle(size * 0.75, size * 0.75);
-						box.setFill(Color.TRANSPARENT);
-						int boxRow = boxes[j].row;
-						boolean jump = boxes[j].jump;
-						int boxColumn = boxes[j].column;
-						box.setStroke(Color.TURQUOISE);
-						// For each of these create a click event
-						box.setOnMouseClicked(m -> {
-							//add move to turn ArrayList
-							//turn.add(new Move(piece.row,piece.column,jump,boxRow,boxColumn));
-							//execute move
-							move(piece, jump, boxRow, boxColumn, paneG, board, image,  size);
-						});
-						paneG.add(box, boxColumn, boxRow);
-						paneG.setValignment(box, VPos.CENTER);
-						paneG.setHalignment(box, HPos.CENTER);
+				if (myTurn) {
+					if (jumpingPiece != null && piece != jumpingPiece) {
+						return;
+					}
+					MoveBox[] boxes = MoveBox.generate(piece, board, jumpingPiece);
+					for (int j = 0; j < 4; j += 1) {
+						// For all the possible moves add a small square to show where on the board the
+						// are
+						if (boxes[j] != null) {
+							Rectangle box = new Rectangle(size * 0.75, size * 0.75);
+							box.setFill(Color.TRANSPARENT);
+							int boxRow = boxes[j].row;
+							boolean jump = boxes[j].jump;
+							int boxColumn = boxes[j].column;
+							box.setStroke(Color.TURQUOISE);
+							// For each of these create a click event
+							box.setOnMouseClicked(m -> {
+								//add move to turn ArrayList
+								turn.add(new Move(piece.row, piece.column, jump, boxRow, boxColumn));
+								//execute move
+								move(piece, jump, boxRow, boxColumn, paneG, board, image, size);
+							});
+							paneG.add(box, boxColumn, boxRow);
+							paneG.setValignment(box, VPos.CENTER);
+							paneG.setHalignment(box, HPos.CENTER);
+						}
 					}
 				}
-
 			});
 			//add piece to pane
 			paneG.add(piece.piece, pieceCol, pieceRow);
@@ -397,14 +403,20 @@ public class Main extends Application {
 				field.clear();
 			}
 		});
+		if(!myTurn){
+			executeOpponentTurn(paneG,board,image,size);
+		}
 	}
 
-	public void changePlayer(int playerTurn2) {
-		if (playerTurn2 == 1) {
-			playerTurn = 2;
-		} else {
-			playerTurn = 1;
+	public void endTurn(GridPane paneG, CheckerPiece[][] board, Image image, double size) {
+		myTurn = false;
+		//NETWORK - send turn data to opponent
+		try {
+			out.writeObject(turn);
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
+		executeOpponentTurn(paneG,board,image,size);
 	}
 
 	public void jumped(CheckerPiece jumped) {
@@ -447,8 +459,7 @@ public class Main extends Application {
 	}
 
 	public void move(CheckerPiece piece, boolean jump, int boxRow, int boxColumn, GridPane paneG, CheckerPiece[][] board,
-					 Image image, double size)
-	{
+					 Image image, double size) {
 		CheckerPiece jumped = null;
 		// If we jumped have to keep repeating
 		if (jump) {
@@ -461,18 +472,20 @@ public class Main extends Application {
 				removeGraphic(paneG, r, c);
 			board[r][c] = null;
 			//Check after jump to see if any jumps left
-			MoveBox[] boxesAfterJump = MoveBox.generate(piece, board, jumpingPiece);
-			if (boxesAfterJump[0] == null) {
-				// If we ran out of jumping moves
-				jumped = null;
-				changePlayer(playerTurn);
+			if (myTurn) {
+				MoveBox[] boxesAfterJump = MoveBox.generate(piece, board, jumpingPiece);
+				if (boxesAfterJump[0] == null) {
+					// If we ran out of jumping moves
+					jumped = null;
+					endTurn(paneG, board, image, size);
+				}
 			}
 		}
 		// When clicked we move the piece to that point on the board updating all
 		// variables of its move
 		// We didn't jump so we don't need to repeat
-		else {
-			changePlayer(playerTurn);
+		else if (myTurn) {
+			endTurn(paneG, board, image, size);
 		}
 
 		// All the code that progresses a turn no matter what happens
@@ -505,12 +518,9 @@ public class Main extends Application {
 		}
 
 		jumped(jumped);
-		System.out.println(playerTurn);
 
 		removeBoxes(paneG);
 	}
-
-}
 
 	/*void executeOpponentMove(){
 
@@ -525,19 +535,42 @@ public class Main extends Application {
 		boolean jump = in.readBoolean();
 		int boxRow = in.readInt();
 		int boxCol = in.readInt();
+	}*/
+
+	void executeOpponentTurn(GridPane paneG, CheckerPiece[][] board, Image image, double size) {
+		//NETWORK - get opponent's turn
+		try {
+			turn = (ArrayList<Move>) in.readObject();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		//execute opponent's turn
+		for (Move m : turn) {
+			move(board[m.pieceRow][m.pieceCol], m.jump, m.boxRow, m.boxCol, paneG, board, image, size);
+			try {
+				sleep(500);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		myTurn = true;
+		turn = new ArrayList<>();
 	}
 
-	//a Move class array is used to send and recieve turns over network
-	class Move{
+	//an ArrayList of Move objects is used to send and receive turns over network
+	class Move {
 		public int pieceRow, pieceCol, boxRow, boxCol;
 		public boolean jump;
 
-		Move(int pieceRow, int pieceCol, boolean jump, int boxRow, int boxCol){
+		Move(int pieceRow, int pieceCol, boolean jump, int boxRow, int boxCol) {
 			this.pieceRow = pieceRow;
 			this.pieceCol = pieceCol;
 			this.jump = jump;
 			this.boxRow = boxRow;
 			this.boxCol = boxCol;
 		}
-	}*/
+	}
+}
 
