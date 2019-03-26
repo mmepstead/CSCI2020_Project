@@ -68,6 +68,8 @@ import javafx.stage.Stage;
 //TODO ADD IN SECOND PLAYER TURN WITH BLACK PIECES
 public class Main extends Application {
 	CheckerPiece jumpingPiece = null;
+	int redPieces = 12;
+	int blackPieces = 12;
 	int playerTurn = 1;
 	boolean hosting;
 
@@ -317,7 +319,6 @@ public class Main extends Application {
 
 			// For each piece set up a click function
 			piece.piece.setOnMouseClicked(e -> {
-					//
 				ArrayList turn = new ArrayList();	//used to hold all the moves the player during this turn so they
 				//can be sent over the network to the opponent
 				// Generate all possible moves for that piece
@@ -459,6 +460,14 @@ public class Main extends Application {
 			// Remove the piece we jumped over
 			int r = (piece.row + boxRow) / 2;
 			int c = (piece.column + boxColumn) / 2;
+			if(board[r][c].piece.getFill() == Color.RED)
+			{
+				redPieces -=1;
+			}
+			if(board[r][c].piece.getFill() == Color.BLACK)
+			{
+				blackPieces -=1;
+			}
 			removeGraphic(paneG, r, c);
 			if (board[r][c].kinged)
 				removeGraphic(paneG, r, c);
@@ -475,6 +484,14 @@ public class Main extends Application {
 		// variables of its move
 		// We didn't jump so we don't need to repeat
 		else {
+			if(blackPieces == 0)
+			{
+				//Player 1 wins
+			}
+			if(redPieces == 0)
+			{
+				//Player 2 wins
+			}
 			changePlayer(playerTurn);
 		}
 
@@ -497,7 +514,16 @@ public class Main extends Application {
 		piece.row = boxRow;
 		piece.column = boxColumn;
 
-		if (boxRow == 0) {
+		if (boxRow == 0 && piece.piece.getFill() == Color.RED) {
+			piece.kinged = true;
+			ImageView imageView = new ImageView(image);
+			imageView.setFitHeight(size * 0.75);
+			imageView.setFitWidth(size * 0.75);
+			paneG.add(imageView, piece.column, piece.row);
+			paneG.setValignment(imageView, VPos.CENTER);
+			paneG.setHalignment(imageView, HPos.CENTER);
+		}
+		if (boxRow == 7 && piece.piece.getFill() == Color.BLACK) {
 			piece.kinged = true;
 			ImageView imageView = new ImageView(image);
 			imageView.setFitHeight(size * 0.75);
@@ -508,7 +534,6 @@ public class Main extends Application {
 		}
 
 		jumped(jumped);
-		System.out.println(playerTurn);
 
 		removeBoxes(paneG);
 	}
