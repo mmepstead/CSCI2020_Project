@@ -81,8 +81,8 @@ public class Main extends Application {
 	//Networking variables
 	static ServerSocket ss;
 	static Socket socket;
-	static ObjectInputStream in;
-	static ObjectOutputStream out;
+	static DataInputStream in;
+	static DataOutputStream out;
 	static String IPaddress;
 	static ArrayList<Move> turn;
 
@@ -134,10 +134,9 @@ public class Main extends Application {
 		try {
 			//create socket to communicate with client
 			socket = ss.accept();
-			//hosting = true;
 			//initialize IO streams
-			in = new ObjectInputStream(socket.getInputStream());
-			out = new ObjectOutputStream(socket.getOutputStream());
+			in = new DataInputStream(socket.getInputStream());
+			out = new DataOutputStream(socket.getOutputStream());
 
 			/*new Thread( () -> {
 				while(true)
@@ -163,7 +162,7 @@ public class Main extends Application {
 	private static void joinGame() {
 		myTurn = false; //host goes first
 		playerNumber = 2;
-		String hostIPaddress = "localHost";
+		String hostIPaddress = "localhost";
 
 		//UI: have user enter an IP address to connect to, store IP address in the String variable "hostIPaddress"
 
@@ -172,8 +171,8 @@ public class Main extends Application {
 			//create socket and connect to server
 			socket = new Socket(hostIPaddress, 8000);
 			//initialize IO streams
-			in = new ObjectInputStream(socket.getInputStream());
-			out = new ObjectOutputStream(socket.getOutputStream());
+			in = new DataInputStream(socket.getInputStream());
+			out = new DataOutputStream(socket.getOutputStream());
 
 			/*new Thread( () -> {
 				while(true)
@@ -421,7 +420,14 @@ public class Main extends Application {
 		myTurn = false;
 		//NETWORK - send turn data to opponent
 		try {
-			out.writeObject(turn);
+			out.writeInt(turn.size());
+			for(Move m : turn){
+				out.writeInt(m.pieceRow);
+				out.writeInt(m.pieceCol);
+				out.writeBoolean(m.jump);
+				out.writeInt(m.boxRow);
+				out.writeInt(m.boxCol);
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -557,13 +563,16 @@ public class Main extends Application {
 
 	void executeOpponentTurn(GridPane paneG, CheckerPiece[][] board, Image image, double size) {
 		//NETWORK - get opponent's turn
+		//turn = new ArrayList<>();
 		try {
-			turn = (ArrayList<Move>) in.readObject();
+			int numberOfMoves = in.readInt();
+			for(int i = 0; i < numberOfMoves; i++){
+				move(board[in.readInt()][in.readInt()], in.readBoolean(),in.readInt(),in.readInt(), paneG, board, image, size);
+				//turn.add(new Move(in.readInt(),in.readInt(),in.readBoolean(),in.readInt(),in.readInt()));
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		}
+		}/*
 		//execute opponent's turn
 		for (Move m : turn) {
 			move(board[m.pieceRow][m.pieceCol], m.jump, m.boxRow, m.boxCol, paneG, board, image, size);
@@ -572,7 +581,7 @@ public class Main extends Application {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-		}
+		}*/
 		myTurn = true;
 		turn = new ArrayList<>();
 	}
