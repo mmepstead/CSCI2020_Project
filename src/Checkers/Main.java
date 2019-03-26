@@ -317,40 +317,39 @@ public class Main extends Application {
 
 			// For each piece set up a click function
 			piece.piece.setOnMouseClicked(e -> {
-				if (playerTurn == 1 /*&& hosting*/) {
 					//
-					ArrayList turn = new ArrayList();	//used to hold all the moves the player during this turn so they
-					//can be sent over the network to the opponent
+				ArrayList turn = new ArrayList();	//used to hold all the moves the player during this turn so they
+				//can be sent over the network to the opponent
 
-					// Generate all possible moves for that piece
-					if(jumpingPiece != null && piece != jumpingPiece)
-					{
-						return;
-					}
-					MoveBox[] boxes = MoveBox.generate(piece, board, jumpingPiece);
-					for (int j = 0; j < 4; j += 1) {
-						// For all the possible moves add a small square to show where on the board the
-						// are
-						if (boxes[j] != null) {
-							Rectangle box = new Rectangle(size * 0.75, size * 0.75);
-							box.setFill(Color.TRANSPARENT);
-							int boxRow = boxes[j].row;
-							boolean jump = boxes[j].jump;
-							int boxColumn = boxes[j].column;
-							box.setStroke(Color.TURQUOISE);
-							// For each of these create a click event
-							box.setOnMouseClicked(m -> {
-								//add move to turn ArrayList
-								//turn.add(new Move(piece.row,piece.column,jump,boxRow,boxColumn));
-								//execute move
-								move(piece, jump, boxRow, boxColumn, paneG, board, image,  size);
-							});
-							paneG.add(box, boxColumn, boxRow);
-							paneG.setValignment(box, VPos.CENTER);
-							paneG.setHalignment(box, HPos.CENTER);
-						}
+				// Generate all possible moves for that piece
+				if(jumpingPiece != null && piece != jumpingPiece)
+				{
+					return;
+				}
+				MoveBox[] boxes = MoveBox.generate(piece, board, jumpingPiece);
+				for (int j = 0; j < 4; j += 1) {
+					// For all the possible moves add a small square to show where on the board the
+					// are
+					if (boxes[j] != null) {
+						Rectangle box = new Rectangle(size * 0.75, size * 0.75);
+						box.setFill(Color.TRANSPARENT);
+						int boxRow = boxes[j].row;
+						boolean jump = boxes[j].jump;
+						int boxColumn = boxes[j].column;
+						box.setStroke(Color.TURQUOISE);
+						// For each of these create a click event
+						box.setOnMouseClicked(m -> {
+							//add move to turn ArrayList
+							//turn.add(new Move(piece.row,piece.column,jump,boxRow,boxColumn));
+							//execute move
+							move(piece, jump, boxRow, boxColumn, paneG, board, image,  size);
+						});
+						paneG.add(box, boxColumn, boxRow);
+						paneG.setValignment(box, VPos.CENTER);
+						paneG.setHalignment(box, HPos.CENTER);
 					}
 				}
+
 			});
 			//add piece to pane
 			paneG.add(piece.piece, pieceCol, pieceRow);
