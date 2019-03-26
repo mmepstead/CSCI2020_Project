@@ -107,12 +107,6 @@ public class Main extends Application {
 		primaryStage.setScene(scene); // Place the scene in the stage
 		primaryStage.show(); // Display the stage
 
-		//initialize server socket
-		try {
-			ss = new ServerSocket(8000);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 
 		//initialize IPaddress
 		try {
@@ -128,6 +122,12 @@ public class Main extends Application {
 		myTurn = true; //host goes first
 		playerNumber = 1;
 		turn = new ArrayList<>();
+		//initialize server socket
+		try {
+			ss = new ServerSocket(8000);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		//UI: display IPaddress and screen waiting for opponent to connect
 
 		//NETWORK: wait for player to connect and assign socket and I/O streams - DONE
@@ -137,7 +137,6 @@ public class Main extends Application {
 			//initialize IO streams
 			in = new DataInputStream(socket.getInputStream());
 			out = new DataOutputStream(socket.getOutputStream());
-
 			/*new Thread( () -> {
 				while(true)
 				{
@@ -155,6 +154,7 @@ public class Main extends Application {
 							//with opponent and terminate game if connection is lost, returning player to the menu with
 							//a message that the connection was lost
 		} catch (IOException e) {
+			System.out.println("Exception1");
 			e.printStackTrace();
 		}
 	}
@@ -185,6 +185,7 @@ public class Main extends Application {
 			//a message that the connection was lost
 
 		} catch (IOException e) {
+			System.out.println("Exception");
 			e.printStackTrace();
 		}
 	}
@@ -247,6 +248,7 @@ public class Main extends Application {
 			@Override
 			public void handle(MouseEvent event) {
 				hostGame();
+				System.out.println("Host");
 				GameStart(pane, width, height);
 			}
 		});
@@ -256,6 +258,7 @@ public class Main extends Application {
 			@Override
 			public void handle(MouseEvent event) {
 				joinGame();
+				System.out.println("Join");
 				GameStart(pane, width, height);
 			}
 		});
@@ -421,94 +424,94 @@ public class Main extends Application {
 		//NETWORK - send turn data to opponent
 		try {
 			out.writeInt(turn.size());
-			for(Move m : turn){
+			for (Move m : turn) {
 				out.writeInt(m.pieceRow);
 				out.writeInt(m.pieceCol);
 				out.writeBoolean(m.jump);
 				out.writeInt(m.boxRow);
 				out.writeInt(m.boxCol);
 			}
-		} catch (IOException e) {
+			executeOpponentTurn(paneG, board, image, size);
+		}catch (IOException e) {
 			e.printStackTrace();
 		}
-		executeOpponentTurn(paneG,board,image,size);
 	}
 
-	public void jumped(CheckerPiece jumped) {
-		jumpingPiece = jumped;
-	}
+		public void jumped (CheckerPiece jumped){
+			jumpingPiece = jumped;
+		}
 
-	public void removeBoxes(GridPane pane) {
-		Iterator<Node> itr = pane.getChildren().iterator();
-		ArrayList<Node> found = new ArrayList<Node>();
-		while (itr.hasNext()) {
-			Node x = itr.next();
-			if (x != null) {
-				if (x instanceof Rectangle) {
-					if (((Rectangle) x).getStroke() != null) {
-						if (((Rectangle) x).getStroke().equals(Color.TURQUOISE)) {
-							found.add(x);
+		public void removeBoxes (GridPane pane){
+			Iterator<Node> itr = pane.getChildren().iterator();
+			ArrayList<Node> found = new ArrayList<Node>();
+			while (itr.hasNext()) {
+				Node x = itr.next();
+				if (x != null) {
+					if (x instanceof Rectangle) {
+						if (((Rectangle) x).getStroke() != null) {
+							if (((Rectangle) x).getStroke().equals(Color.TURQUOISE)) {
+								found.add(x);
+							}
 						}
 					}
 				}
 			}
+			pane.getChildren().removeAll(found);
 		}
-		pane.getChildren().removeAll(found);
-	}
 
-	public void removeGraphic(GridPane pane, int row, int col) {
+		public void removeGraphic (GridPane pane,int row, int col){
 
-		Iterator<Node> itr = pane.getChildren().iterator();
-		while (itr.hasNext()) {
-			Node node = itr.next();
-			if (node instanceof Circle && GridPane.getRowIndex(node) == row && GridPane.getColumnIndex(node) == col) {
-				pane.getChildren().remove(node);
-				break;
-			}
-			if (node instanceof ImageView && GridPane.getRowIndex(node) == row
-					&& GridPane.getColumnIndex(node) == col) {
-				System.out.println(pane.getChildren().remove(((ImageView) node)));
-				break;
-			}
-		}
-	}
-
-	public void move(CheckerPiece piece, boolean jump, int boxRow, int boxColumn, GridPane paneG, CheckerPiece[][] board,
-					 Image image, double size) {
-		CheckerPiece jumped = null;
-		// If we jumped have to keep repeating
-		if (jump) {
-			jumped(piece);
-			// Remove the piece we jumped over
-			int r = (piece.row + boxRow) / 2;
-			int c = (piece.column + boxColumn) / 2;
-			if (board[r][c].piece.getFill() == Color.RED) {
-				redPieces -= 1;
-			}
-			if (board[r][c].piece.getFill() == Color.BLACK) {
-				blackPieces -= 1;
-			}
-			removeGraphic(paneG, r, c);
-			if (board[r][c].kinged)
-				removeGraphic(paneG, r, c);
-			board[r][c] = null;
-			//Check after jump to see if any jumps left
-			if (myTurn) {
-				MoveBox[] boxesAfterJump = MoveBox.generate(piece, board, jumpingPiece);
-				if (boxesAfterJump[0] == null) {
-					// If we ran out of jumping moves
-					jumped = null;
-					endTurn(paneG, board, image, size);
+			Iterator<Node> itr = pane.getChildren().iterator();
+			while (itr.hasNext()) {
+				Node node = itr.next();
+				if (node instanceof Circle && GridPane.getRowIndex(node) == row && GridPane.getColumnIndex(node) == col) {
+					pane.getChildren().remove(node);
+					break;
+				}
+				if (node instanceof ImageView && GridPane.getRowIndex(node) == row
+						&& GridPane.getColumnIndex(node) == col) {
+					System.out.println(pane.getChildren().remove(((ImageView) node)));
+					break;
 				}
 			}
 		}
-		// When clicked we move the piece to that point on the board updating all
-		// variables of its move
-		// We didn't jump so we don't need to repeat
 
-		else if (myTurn) {
-			endTurn(paneG, board, image, size);
-		}else{
+		public void move (CheckerPiece piece,boolean jump, int boxRow, int boxColumn, GridPane paneG, CheckerPiece[][]
+		board, Image image,double size){
+			CheckerPiece jumped = null;
+			// If we jumped have to keep repeating
+			if (jump) {
+				jumped(piece);
+				// Remove the piece we jumped over
+				int r = (piece.row + boxRow) / 2;
+				int c = (piece.column + boxColumn) / 2;
+				if (board[r][c].piece.getFill() == Color.RED) {
+					redPieces -= 1;
+				}
+				if (board[r][c].piece.getFill() == Color.BLACK) {
+					blackPieces -= 1;
+				}
+				removeGraphic(paneG, r, c);
+				if (board[r][c].kinged)
+					removeGraphic(paneG, r, c);
+				board[r][c] = null;
+				//Check after jump to see if any jumps left
+				if (myTurn) {
+					MoveBox[] boxesAfterJump = MoveBox.generate(piece, board, jumpingPiece);
+					if (boxesAfterJump[0] == null) {
+						// If we ran out of jumping moves
+						jumped = null;
+						endTurn(paneG, board, image, size);
+					}
+				}
+			}
+			// When clicked we move the piece to that point on the board updating all
+			// variables of its move
+			// We didn't jump so we don't need to repeat
+
+			else if (myTurn) {
+				endTurn(paneG, board, image, size);
+			} else {
 				if (blackPieces == 0) {
 					//Player 1 wins
 				}
@@ -563,6 +566,7 @@ public class Main extends Application {
 
 	void executeOpponentTurn(GridPane paneG, CheckerPiece[][] board, Image image, double size) {
 		//NETWORK - get opponent's turn
+
 		//turn = new ArrayList<>();
 		try {
 			int numberOfMoves = in.readInt();
@@ -572,7 +576,8 @@ public class Main extends Application {
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		}/*
+		}
+
 		//execute opponent's turn
 		for (Move m : turn) {
 			move(board[m.pieceRow][m.pieceCol], m.jump, m.boxRow, m.boxCol, paneG, board, image, size);
@@ -581,7 +586,7 @@ public class Main extends Application {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-		}*/
+		}
 		myTurn = true;
 		turn = new ArrayList<>();
 	}
