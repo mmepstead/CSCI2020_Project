@@ -3,12 +3,14 @@ package Checkers;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
+import javafx.scene.image.ImageView;
 //Basic CheckerPiece Class with all necessary variables
 public class CheckerPiece {
     public boolean kinged = false;
     public int column;
     public int row;
     public Circle piece;
+    public ImageView image;
 
     public CheckerPiece(Paint colour, int column, int row, double rad)
     {

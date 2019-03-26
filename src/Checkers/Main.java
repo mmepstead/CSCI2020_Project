@@ -75,6 +75,7 @@ public class Main extends Application {
 
 	int redPieces = 12;
 	int blackPieces = 12;
+	static boolean moveFinished = false;
 	static int playerNumber;
 
 
@@ -280,6 +281,7 @@ public class Main extends Application {
 		GridPane paneG = new GridPane();
 		pane.setCenter(paneG);
 
+
 		// size of each section of the board
 		double size = height / 8.0;
 		for (int x = 0; x < 8; x++) {
@@ -303,7 +305,19 @@ public class Main extends Application {
 			e2.printStackTrace();
 		}
 		Image image = new Image(input);
-
+		new Thread(() ->
+		{
+			while(true)
+			{
+				System.out.println("Looping");
+				if(moveFinished && !myTurn)
+				{
+					endTurn(paneG, board,image,size);
+					moveFinished = false;
+					System.out.println("Finished");
+				}
+			}
+		}).start();
 		// testing setup
 		for (int i = 0; i < 24; i += 1) {
 			// Set height and widths for columns
@@ -331,7 +345,7 @@ public class Main extends Application {
 			piece.piece.setOnMouseClicked(e -> {
 
 				//used to hold all the moves the player during this turn so they
-				ArrayList turn = new ArrayList();	//used to hold all the moves the player during this turn so they
+				//ArrayList turn = new ArrayList();	//used to hold all the moves the player during this turn so they
 
 				//can be sent over the network to the opponent
 				// Generate all possible moves for that piece
@@ -356,6 +370,7 @@ public class Main extends Application {
 								turn.add(new Move(piece.row, piece.column, jump, boxRow, boxColumn));
 								//execute move
 								move(piece, jump, boxRow, boxColumn, paneG, board, image, size);
+								moveFinished = true;
 							});
 							paneG.add(box, boxColumn, boxRow);
 							paneG.setValignment(box, VPos.CENTER);
@@ -414,9 +429,12 @@ public class Main extends Application {
 				field.clear();
 			}
 		});
+		System.out.println("Showing Board");
 		if(!myTurn){
+			System.out.println("not my turn");
 			executeOpponentTurn(paneG,board,image,size);
 		}
+
 	}
 
 	public void endTurn(GridPane paneG, CheckerPiece[][] board, Image image, double size) {
@@ -465,12 +483,18 @@ public class Main extends Application {
 			while (itr.hasNext()) {
 				Node node = itr.next();
 				if (node instanceof Circle && GridPane.getRowIndex(node) == row && GridPane.getColumnIndex(node) == col) {
-					pane.getChildren().remove(node);
+					Platform.runLater(() ->
+					{
+						pane.getChildren().remove(node);
+					});
 					break;
 				}
 				if (node instanceof ImageView && GridPane.getRowIndex(node) == row
 						&& GridPane.getColumnIndex(node) == col) {
-					System.out.println(pane.getChildren().remove(((ImageView) node)));
+					Platform.runLater(() ->
+					{
+						pane.getChildren().remove(((ImageView) node));
+					});
 					break;
 				}
 			}
@@ -492,8 +516,9 @@ public class Main extends Application {
 					blackPieces -= 1;
 				}
 				removeGraphic(paneG, r, c);
-				if (board[r][c].kinged)
+				if (board[r][c].kinged) {
 					removeGraphic(paneG, r, c);
+				}
 				board[r][c] = null;
 				//Check after jump to see if any jumps left
 				if (myTurn) {
@@ -501,7 +526,7 @@ public class Main extends Application {
 					if (boxesAfterJump[0] == null) {
 						// If we ran out of jumping moves
 						jumped = null;
-						endTurn(paneG, board, image, size);
+						myTurn = false;
 					}
 				}
 			}
@@ -510,7 +535,7 @@ public class Main extends Application {
 			// We didn't jump so we don't need to repeat
 
 			else if (myTurn) {
-				endTurn(paneG, board, image, size);
+				myTurn = false;
 			} else {
 				if (blackPieces == 0) {
 					//Player 1 wins
@@ -519,48 +544,56 @@ public class Main extends Application {
 					//Player 2 wins
 				}
 			}
-
 			// All the code that progresses a turn no matter what happens
 			board[piece.row][piece.column] = null;
 			board[boxRow][boxColumn] = piece;
 			// updates graphics
 			removeGraphic(paneG, piece.row, piece.column);
-			paneG.add(piece.piece, boxColumn, boxRow);
-			if (piece.kinged) {
-				removeGraphic(paneG, piece.row, piece.column);
-				ImageView imageView = new ImageView(image);
-				imageView.setFitHeight(size * 0.75);
-				imageView.setFitWidth(size * 0.75);
-				paneG.add(imageView, boxColumn, boxRow);
-				paneG.setValignment(imageView, VPos.CENTER);
-				paneG.setHalignment(imageView, HPos.CENTER);
-			}
-
-			piece.row = boxRow;
-			piece.column = boxColumn;
-
 			if (boxRow == 0 && piece.piece.getFill() == Color.RED) {
 				piece.kinged = true;
 				ImageView imageView = new ImageView(image);
 				imageView.setFitHeight(size * 0.75);
 				imageView.setFitWidth(size * 0.75);
-				paneG.add(imageView, piece.column, piece.row);
-				paneG.setValignment(imageView, VPos.CENTER);
-				paneG.setHalignment(imageView, HPos.CENTER);
+				Platform.runLater(()-> {
+					paneG.add(imageView, piece.column, piece.row);
+					paneG.setValignment(imageView, VPos.CENTER);
+					paneG.setHalignment(imageView, HPos.CENTER);
+				});
 			}
 			if (boxRow == 7 && piece.piece.getFill() == Color.BLACK) {
 				piece.kinged = true;
 				ImageView imageView = new ImageView(image);
 				imageView.setFitHeight(size * 0.75);
 				imageView.setFitWidth(size * 0.75);
-				paneG.add(imageView, piece.column, piece.row);
-				paneG.setValignment(imageView, VPos.CENTER);
-				paneG.setHalignment(imageView, HPos.CENTER);
+				Platform.runLater(()-> {
+					paneG.add(imageView, piece.column, piece.row);
+					paneG.setValignment(imageView, VPos.CENTER);
+					paneG.setHalignment(imageView, HPos.CENTER);
+				});
+			}
+			if (piece.kinged) {
+				removeGraphic(paneG, piece.row, piece.column);
+				ImageView imageView = new ImageView(image);
+				imageView.setFitHeight(size * 0.75);
+				imageView.setFitWidth(size * 0.75);
+				Platform.runLater(()-> {
+					paneG.add(imageView, boxColumn, boxRow);
+					paneG.setValignment(imageView, VPos.CENTER);
+					paneG.setHalignment(imageView, HPos.CENTER);
+				});
 			}
 
-			jumped(jumped);
+			piece.row = boxRow;
+			piece.column = boxColumn;
 
-			removeBoxes(paneG);
+			Platform.runLater(()-> {
+				paneG.add(piece.piece, boxColumn, boxRow);
+			});
+
+			jumped(jumped);
+			Platform.runLater(()-> {
+				removeBoxes(paneG);
+			});
 		}
 
 
@@ -569,9 +602,17 @@ public class Main extends Application {
 
 		//turn = new ArrayList<>();
 		try {
+			System.out.println(in);
 			int numberOfMoves = in.readInt();
+			System.out.println(numberOfMoves);
 			for(int i = 0; i < numberOfMoves; i++){
-				move(board[in.readInt()][in.readInt()], in.readBoolean(),in.readInt(),in.readInt(), paneG, board, image, size);
+				System.out.println("WE FUCKING LOOPED");
+				int row = in.readInt();
+				int col = in.readInt();
+				boolean jump = in.readBoolean();
+				int boxRow = in.readInt();
+				int boxCol = in.readInt();
+				move(board[row][col], jump, boxRow, boxCol, paneG, board, image, size);
 				//turn.add(new Move(in.readInt(),in.readInt(),in.readBoolean(),in.readInt(),in.readInt()));
 			}
 		} catch (IOException e) {
@@ -579,6 +620,7 @@ public class Main extends Application {
 		}
 
 		//execute opponent's turn
+		/*
 		for (Move m : turn) {
 			move(board[m.pieceRow][m.pieceCol], m.jump, m.boxRow, m.boxCol, paneG, board, image, size);
 			try {
@@ -586,7 +628,7 @@ public class Main extends Application {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-		}
+		}*/
 		myTurn = true;
 		turn = new ArrayList<>();
 	}
