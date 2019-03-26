@@ -266,11 +266,11 @@ public class Main extends Application {
 
 		// Font.getFamilies() prints out all the available fonts
 		// setting the text for the buttons on the main menu
-		Text offline = new Text(menuBoxes[0].getCenterX() - 30, menuBoxes[0].getCenterY() + 5, "Host Game");
+		Text offline = new Text(menuBoxes[0].getCenterX() - 40, menuBoxes[0].getCenterY() + 5, "Host Game");
 		offline.setFill(Color.WHITE);
 		offline.setFont(new Font("Times New Roman", 18));
 		paneG.getChildren().add(offline);
-		Text online = new Text(menuBoxes[1].getCenterX() - 25, menuBoxes[1].getCenterY() + 5, "Join Game");
+		Text online = new Text(menuBoxes[1].getCenterX() - 40, menuBoxes[1].getCenterY() + 5, "Join Game");
 		online.setFill(Color.WHITE);
 		online.setFont(new Font("Times New Roman", 18));
 		paneG.getChildren().add(online);
@@ -309,7 +309,8 @@ public class Main extends Application {
 		{
 			while(true)
 			{
-				System.out.println("Looping");
+				//Very Necessarry PrintLN!
+				System.out.println("");
 				if(moveFinished && !myTurn)
 				{
 					endTurn(paneG, board,image,size);
@@ -336,7 +337,7 @@ public class Main extends Application {
 				pieceCol = ((i - 12) * 2 + (((i - 12) / 4 + 1) % 2)) % 8;
 				pieceColor = Color.RED;
 			}
-			CheckerPiece piece = new CheckerPiece(pieceColor, pieceCol, pieceRow, (size * 3.0) / 8.0);
+			CheckerPiece piece = new CheckerPiece(pieceColor, pieceCol, pieceRow, (size * 3.0) / 8.0, image);
 
 			// Place them in the board
 			board[pieceRow][pieceCol] = piece;
@@ -349,7 +350,8 @@ public class Main extends Application {
 
 				//can be sent over the network to the opponent
 				// Generate all possible moves for that piece
-				if (myTurn) {
+				if ((myTurn && playerNumber == 1 && piece.piece.getFill() == Color.RED) ||
+						(myTurn && playerNumber == 2 && piece.piece.getFill() == Color.BLACK)){
 					if (jumpingPiece != null && piece != jumpingPiece) {
 						return;
 					}
@@ -536,56 +538,37 @@ public class Main extends Application {
 
 			else if (myTurn) {
 				myTurn = false;
-			} else {
-				if (blackPieces == 0) {
-					//Player 1 wins
-				}
-				if (redPieces == 0) {
-					//Player 2 wins
-				}
 			}
 			// All the code that progresses a turn no matter what happens
 			board[piece.row][piece.column] = null;
 			board[boxRow][boxColumn] = piece;
 			// updates graphics
-			removeGraphic(paneG, piece.row, piece.column);
+
+			if (piece.kinged) {
+				Platform.runLater(()-> {
+					paneG.add(piece.image, boxColumn, boxRow);
+					paneG.setValignment(piece.image, VPos.CENTER);
+					paneG.setHalignment(piece.image, HPos.CENTER);
+				});
+			}
+			piece.row = boxRow;
+			piece.column = boxColumn;
 			if (boxRow == 0 && piece.piece.getFill() == Color.RED) {
 				piece.kinged = true;
-				ImageView imageView = new ImageView(image);
-				imageView.setFitHeight(size * 0.75);
-				imageView.setFitWidth(size * 0.75);
 				Platform.runLater(()-> {
-					paneG.add(imageView, piece.column, piece.row);
-					paneG.setValignment(imageView, VPos.CENTER);
-					paneG.setHalignment(imageView, HPos.CENTER);
+					paneG.add(piece.image, piece.column, piece.row);
+					paneG.setValignment(piece.image, VPos.CENTER);
+					paneG.setHalignment(piece.image, HPos.CENTER);
 				});
 			}
 			if (boxRow == 7 && piece.piece.getFill() == Color.BLACK) {
 				piece.kinged = true;
-				ImageView imageView = new ImageView(image);
-				imageView.setFitHeight(size * 0.75);
-				imageView.setFitWidth(size * 0.75);
 				Platform.runLater(()-> {
-					paneG.add(imageView, piece.column, piece.row);
-					paneG.setValignment(imageView, VPos.CENTER);
-					paneG.setHalignment(imageView, HPos.CENTER);
+					paneG.add(piece.image, piece.column, piece.row);
+					paneG.setValignment(piece.image, VPos.CENTER);
+					paneG.setHalignment(piece.image, HPos.CENTER);
 				});
 			}
-			if (piece.kinged) {
-				removeGraphic(paneG, piece.row, piece.column);
-				ImageView imageView = new ImageView(image);
-				imageView.setFitHeight(size * 0.75);
-				imageView.setFitWidth(size * 0.75);
-				Platform.runLater(()-> {
-					paneG.add(imageView, boxColumn, boxRow);
-					paneG.setValignment(imageView, VPos.CENTER);
-					paneG.setHalignment(imageView, HPos.CENTER);
-				});
-			}
-
-			piece.row = boxRow;
-			piece.column = boxColumn;
-
 			Platform.runLater(()-> {
 				paneG.add(piece.piece, boxColumn, boxRow);
 			});
